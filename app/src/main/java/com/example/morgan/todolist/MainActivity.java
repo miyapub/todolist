@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -16,9 +18,11 @@ import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RadioButton;
+import android.widget.RelativeLayout;
 import android.widget.SimpleAdapter;
 
 import java.util.ArrayList;
@@ -54,12 +58,50 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 //positon为点击到的listView的索引
-                Map<String,Object> map=todo_list_data.get(position);
+                final Map<String,Object> map=todo_list_data.get(position);
                 //获取title的值
                 String todo=(String)map.get("todo");
-                map.put("todo","222");
-                //Alert("title",todo);
-                render_list();
+                final RadioButton rb=(RadioButton)view.findViewById(R.id.todoCheck);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        map.put("todo","222");
+                        //和UI无关的，和数据有关的都在这里
+                        runOnUiThread(new Runnable(){
+                            @Override
+                            public void run() {
+                                //和UI有关的，都在这里
+                                if(rb.isChecked()){
+                                    rb.setChecked(false);
+                                }else{
+                                    rb.setChecked(true);
+                                }
+                                //Alert("title","999");
+                                //render_list();
+                            }
+                        });
+                    }
+                }).start();
+                //
+                /*
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        map.put("todo","222");
+                        Alert("title","999");
+                        runOnUiThread(new Runnable(){
+                            @Override
+                            public void run() {
+                                try {
+                                    Thread.sleep(5000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                //render_list();
+                            }
+                        });
+                    }
+                }).start();*/
                 //Intent intent=new Intent(this,NewActivity.class);
                 //intent.putExtra("title",title);
                 //startActivity(intent);
@@ -179,5 +221,10 @@ public class MainActivity extends AppCompatActivity {
         //绑定
         ListView list=(ListView)findViewById(R.id.list);
         list.setAdapter(simpleAdapter);
+        for (int i=0;i<simpleAdapter.getCount();i++){
+            LinearLayout layout= (LinearLayout) list.getAdapter().getView(i,null,null);//RelativeLayout是listview的item父布局
+            RadioButton rb= (RadioButton) layout.getChildAt(0);
+            rb.setChecked(true);
+        }
     }
 }

@@ -4,11 +4,13 @@
     android:layout_height="wrap_content"
     android:descendantFocusability="blocksDescendants"
     android:orientation="vertical">
+
     <RadioButton
         android:id="@+id/todoCheck"
-        android:clickable="false"
-        android:focusableInTouchMode="false"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+
+        android:clickable="false"
+        android:focusableInTouchMode="false" />
 </LinearLayout>
