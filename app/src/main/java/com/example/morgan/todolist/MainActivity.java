@@ -4,6 +4,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.constraint.ConstraintLayout;
@@ -24,6 +26,9 @@ import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RelativeLayout;
 import android.widget.SimpleAdapter;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,9 +37,9 @@ import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
-    public List<Map<String, Object>> todo_data = new ArrayList<Map<String, Object>>(); //todo 原始列表
+    public SimpleAdapter simpleAdapter=null;//适配器
+    public List<Map<String, Object>> todo_data = new ArrayList<Map<String, Object>>(); //todo 列表
 
-    public List<Map<String, Object>> todo_list_data = new ArrayList<Map<String, Object>>(); //todo 显示的列表
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,6 +47,12 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        simpleAdapter = new SimpleAdapter(getBaseContext(), todo_data,
+                R.layout.item, new String[] { "todo","status"},
+                new int[] { R.id.todoCheck,R.id.status });
+        //绑定
+        ListView list=(ListView)findViewById(R.id.list);
+        list.setAdapter(simpleAdapter);
 
         //
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -53,19 +64,22 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        ListView dotolist=(ListView)findViewById(R.id.list);
-        dotolist.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 //positon为点击到的listView的索引
-                final Map<String,Object> map=todo_list_data.get(position);
+                final Map<String,Object> map=todo_data.get(position);
                 //获取title的值
                 String todo=(String)map.get("todo");
                 final RadioButton rb=(RadioButton)view.findViewById(R.id.todoCheck);
+                final TextView status=(TextView)view.findViewById(R.id.status);
+                //
+                //
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        map.put("todo","222");
+                        //map.put("todo","222");
+
                         //和UI无关的，和数据有关的都在这里
                         runOnUiThread(new Runnable(){
                             @Override
@@ -73,11 +87,16 @@ public class MainActivity extends AppCompatActivity {
                                 //和UI有关的，都在这里
                                 if(rb.isChecked()){
                                     rb.setChecked(false);
+                                    map.put("status","ready");
+                                    status.setText("ready");
                                 }else{
                                     rb.setChecked(true);
+                                    map.put("status","finish");
+                                    status.setText("finish");
                                 }
-                                //Alert("title","999");
-                                //render_list();
+
+                                //重新做布局
+                                render_list();
                             }
                         });
                     }
@@ -122,19 +141,14 @@ public class MainActivity extends AppCompatActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
-
     private void inputTitleDialog() {
         final EditText input = new EditText(this);
-
-
         input.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             public void onFocusChange(View view,boolean hasFocus){
                 if(hasFocus){
@@ -144,23 +158,17 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
         //input.setFocusable(true);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-
-
         builder.setTitle("输入代办事项").setIcon(
                 R.drawable.plus).setView(input).setNegativeButton("取消", null);
         builder.setPositiveButton("确认",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         final String todoText = input.getText().toString();
-                        //
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
-
                                 Map<String, Object> item = new HashMap<String, Object>();
                                 item.put("todo",todoText);
                                 item.put("startTime","2017");
@@ -169,9 +177,6 @@ public class MainActivity extends AppCompatActivity {
                                 item.put("status","ready");
                                 //填充数据
                                 todo_data.add(item);
-
-
-
                                 runOnUiThread(new Runnable(){
                                     @Override
                                     public void run() {
@@ -209,22 +214,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void render_list(){
-        todo_list_data = new ArrayList<Map<String, Object>>(); //todo列表
+        /*
+        todo_data = new ArrayList<Map<String, Object>>(); //todo列表
         for(int i=0; i<todo_data.size(); i++) {
             Map<String, Object> it = todo_data.get(i);
-            todo_list_data.add(it);
+            todo_data.add(it);
         }
-        Collections.reverse(todo_list_data);//倒叙 内容反转
-        SimpleAdapter simpleAdapter = new SimpleAdapter(getBaseContext(), todo_list_data,
-                R.layout.item, new String[] { "todo"},
-                new int[] { R.id.todoCheck});
-        //绑定
+        Collections.reverse(todo_data);//倒叙 内容反转
+        //重新做布局
+        */
+        simpleAdapter.notifyDataSetChanged();
         ListView list=(ListView)findViewById(R.id.list);
-        list.setAdapter(simpleAdapter);
-        for (int i=0;i<simpleAdapter.getCount();i++){
-            LinearLayout layout= (LinearLayout) list.getAdapter().getView(i,null,null);//RelativeLayout是listview的item父布局
-            RadioButton rb= (RadioButton) layout.getChildAt(0);
-            rb.setChecked(true);
+        for(int i = 0; i < list.getChildCount(); i++){
+            View v = list.getChildAt(i);
+            RadioButton r = (RadioButton)v.findViewById(R.id.todoCheck);
+            TextView tv=(TextView)v.findViewById(R.id.status);
+            if(tv.getText().equals("finish")){
+                r.setChecked(true);
+                r.getPaint().setFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+                r.setTextColor(Color.parseColor("#cccccc"));
+            }
+            if(tv.getText().equals("ready")){
+                r.setChecked(false);
+                r.getPaint().setFlags(Paint.LINEAR_TEXT_FLAG);
+                r.setTextColor(Color.parseColor("#000000"));
+            }
         }
     }
 }
