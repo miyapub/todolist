@@ -3,16 +3,11 @@ package com.example.morgan.todolist;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
-import android.os.Handler;
-import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.menu.MenuView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
@@ -20,25 +15,19 @@ import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RadioButton;
-import android.widget.RelativeLayout;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     public SimpleAdapter simpleAdapter=null;//适配器
-    public List<Map<String, Object>> todo_data = new ArrayList<Map<String, Object>>(); //todo 列表
+    public List<Map<String, Object>> todo_data = new ArrayList<>(); //todo 列表
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,12 +36,29 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        Json json=new Json();
+        todo_data.clear();
+        todo_data=json.getInfo(getBaseContext(),"todo");
+
         simpleAdapter = new SimpleAdapter(getBaseContext(), todo_data,
                 R.layout.item, new String[] { "todo","status"},
                 new int[] { R.id.todoCheck,R.id.status });
         //绑定
-        ListView list=(ListView)findViewById(R.id.list);
-        list.setAdapter(simpleAdapter);
+        final ListView list=(ListView)findViewById(R.id.list);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                //和UI无关的，和数据有关的都在这里
+                runOnUiThread(new Runnable(){
+                    @Override
+                    public void run() {
+                        list.setAdapter(simpleAdapter);
+                        render_list();
+                    }
+                });
+            }
+        }).start();
+
 
         //
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -68,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 //positon为点击到的listView的索引
-                final Map<String,Object> map=todo_data.get(position);
+                final Map<String, Object> map=todo_data.get(position);
                 //获取title的值
                 String todo=(String)map.get("todo");
                 final RadioButton rb=(RadioButton)view.findViewById(R.id.todoCheck);
@@ -238,5 +244,7 @@ public class MainActivity extends AppCompatActivity {
                 r.setTextColor(Color.parseColor("#000000"));
             }
         }
+        Json json=new Json();
+        json.saveInfo(getBaseContext(),"todo",todo_data);
     }
 }
