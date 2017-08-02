@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">ToDoList</string>
+    <string name="app_name">待办记事</string>
     <string name="action_settings">Settings</string>
 </resources>

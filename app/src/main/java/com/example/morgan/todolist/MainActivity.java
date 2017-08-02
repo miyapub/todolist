@@ -130,19 +130,17 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_delAll) {
+            todo_data.clear();
+            render_list();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -158,10 +156,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        input.setHint("请输入");
         //input.setFocusable(true);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("输入代办事项").setIcon(
-                R.drawable.plus).setView(input).setNegativeButton("取消", null);
+        builder.setTitle("").setView(input).setNegativeButton("取消", null);
         builder.setPositiveButton("确认",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
