@@ -36,30 +36,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Json json=new Json();
-        todo_data.clear();
-        todo_data=json.getInfo(getBaseContext(),"todo");
-
-        simpleAdapter = new SimpleAdapter(getBaseContext(), todo_data,
-                R.layout.item, new String[] { "todo","status"},
-                new int[] { R.id.todoCheck,R.id.status });
-        //绑定
-        final ListView list=(ListView)findViewById(R.id.list);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                //和UI无关的，和数据有关的都在这里
-                runOnUiThread(new Runnable(){
-                    @Override
-                    public void run() {
-                        list.setAdapter(simpleAdapter);
-                        render_list();
-                    }
-                });
-            }
-        }).start();
-
-
+        todo_data=(new Json()).getInfo(getBaseContext(),"todo");//取出内容
         //
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -70,6 +47,57 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+
+        //render_list();
+        /*
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                //和UI无关的，和数据有关的都在这里
+                //绑定
+                ListView list=(ListView)findViewById(R.id.list);
+
+                simpleAdapter = new SimpleAdapter(getBaseContext(), todo_data,
+                        R.layout.item, new String[] { "todo","status"},
+                        new int[] { R.id.todoCheck,R.id.status });
+
+                runOnUiThread(new Runnable(){
+                    @Override
+                    public void run() {
+                        list.setAdapter(simpleAdapter);
+                        render_list();
+                    }
+                });
+            }
+        }).start();*/
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                //和UI无关的，和数据有关的都在这里
+                final ListView list=(ListView)findViewById(R.id.list);
+
+                simpleAdapter = new SimpleAdapter(getBaseContext(), todo_data,
+                        R.layout.item, new String[] { "todo","status"},
+                        new int[] { R.id.todoCheck,R.id.status });
+                list.setAdapter(simpleAdapter);
+                runOnUiThread(new Runnable(){
+                    @Override
+                    public void run() {
+                        //和UI有关的，都在这里
+
+
+                        //重新做布局
+
+                        render_list();
+                    }
+                });
+            }
+        }).start();
+
+
+        ListView list=(ListView)findViewById(R.id.list);
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -81,27 +109,31 @@ public class MainActivity extends AppCompatActivity {
                 final TextView status=(TextView)view.findViewById(R.id.status);
                 //
                 //
+                if(rb.isChecked()){
+                    //rb.setChecked(false);
+                    map.put("status","ready");
+                    //status.setText("ready");
+                }else{
+                    //rb.setChecked(true);
+                    map.put("status","finish");
+                    //status.setText("finish");
+                }
+                simpleAdapter.notifyDataSetChanged();
+
+                //todo_data.set(position,map);
+
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
                         //map.put("todo","222");
-
+                        (new Json()).saveInfo(getBaseContext(),"todo",todo_data);
                         //和UI无关的，和数据有关的都在这里
                         runOnUiThread(new Runnable(){
                             @Override
                             public void run() {
                                 //和UI有关的，都在这里
-                                if(rb.isChecked()){
-                                    rb.setChecked(false);
-                                    map.put("status","ready");
-                                    status.setText("ready");
-                                }else{
-                                    rb.setChecked(true);
-                                    map.put("status","finish");
-                                    status.setText("finish");
-                                }
-
                                 //重新做布局
+
                                 render_list();
                             }
                         });
@@ -146,7 +178,10 @@ public class MainActivity extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_delAll) {
             todo_data.clear();
-            render_list();
+            Json json=new Json();
+            json.saveInfo(getBaseContext(),"todo",todo_data);
+            //render_list();
+            simpleAdapter.notifyDataSetChanged();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -181,9 +216,12 @@ public class MainActivity extends AppCompatActivity {
                                 item.put("status","ready");
                                 //填充数据
                                 todo_data.add(item);
+                                (new Json()).saveInfo(getBaseContext(),"todo",todo_data);
+
                                 runOnUiThread(new Runnable(){
                                     @Override
                                     public void run() {
+                                        simpleAdapter.notifyDataSetChanged();
                                         render_list();
                                     }
                                 });
@@ -227,24 +265,54 @@ public class MainActivity extends AppCompatActivity {
         Collections.reverse(todo_data);//倒叙 内容反转
         //重新做布局
         */
-        simpleAdapter.notifyDataSetChanged();
-        ListView list=(ListView)findViewById(R.id.list);
+
+
+
+        final ListView list=(ListView)findViewById(R.id.list);
+
+
         for(int i = 0; i < list.getChildCount(); i++){
             View v = list.getChildAt(i);
-            RadioButton r = (RadioButton)v.findViewById(R.id.todoCheck);
+            final RadioButton r = (RadioButton)v.findViewById(R.id.todoCheck);
             TextView tv=(TextView)v.findViewById(R.id.status);
+
+            //if((todo_data.get(i)).get("status").equals("finish")){
             if(tv.getText().equals("finish")){
-                r.setChecked(true);
-                r.getPaint().setFlags(Paint.STRIKE_THRU_TEXT_FLAG);
-                r.setTextColor(Color.parseColor("#cccccc"));
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //和UI无关的，和数据有关的都在这里
+                        runOnUiThread(new Runnable(){
+                            @Override
+                            public void run() {
+                                r.setChecked(true);
+                                r.getPaint().setFlags(Paint.STRIKE_THRU_TEXT_FLAG);
+                                r.setTextColor(Color.parseColor("#cccccc"));
+                            }
+                        });
+                    }
+                }).start();
+
             }
+            //if((todo_data.get(i)).get("status").equals("ready")){
             if(tv.getText().equals("ready")){
-                r.setChecked(false);
-                r.getPaint().setFlags(Paint.LINEAR_TEXT_FLAG);
-                r.setTextColor(Color.parseColor("#000000"));
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //和UI无关的，和数据有关的都在这里
+                        runOnUiThread(new Runnable(){
+                            @Override
+                            public void run() {
+                                r.setChecked(false);
+                                r.getPaint().setFlags(Paint.LINEAR_TEXT_FLAG);
+                                r.setTextColor(Color.parseColor("#000000"));
+                            }
+                        });
+                    }
+                }).start();
+
             }
         }
-        Json json=new Json();
-        json.saveInfo(getBaseContext(),"todo",todo_data);
+
     }
 }
